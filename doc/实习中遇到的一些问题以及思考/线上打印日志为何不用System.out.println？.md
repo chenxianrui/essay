@@ -9,6 +9,7 @@
 #### System.out.println()源码
 我们通过查看源码可以发现，它是线程安全的，底层方法被**synchronized**所修饰。
 
+![synchronized 图标](https://github.com/chenxianrui/essay/blob/master/doc/img/sout-syn.jpg)
 
 #### Log4j的优点
 
