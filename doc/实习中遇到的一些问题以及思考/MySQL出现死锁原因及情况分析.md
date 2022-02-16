@@ -100,7 +100,7 @@ Record lock, heap no 732 PHYSICAL RECORD: n_fields 3; compact format; info bits 
     UPDATE coupon_goods  SET is_delete=1,update_time='2021-11-18 00:19:05.147'  
      WHERE  is_delete=0
     
-    AND (coupon_id = 10626 AND sku_id IN (3706865))
+    AND (coupon_id = 10626 AND sku_id IN (3706865)) 
 
 2.解读
 
@@ -121,9 +121,14 @@ Record lock, heap no 732 PHYSICAL RECORD: n_fields 3; compact format; info bits 
     
     
 #### 问题排查
-    
-
-
+   RC隔离级别下是没有范围锁的，因此该死锁产生与间隙锁和 Next-Key Lock 是无关的。前面的死锁日志也表明了这一点。那就很有可能是
+   代码层面出了问题。
+   经过排查发现是因为在mybatis的xml文件中update语句中入参是map类型，该代码实现的内容是利用kafka监听商品服务的数据库信息的改变，进而
+   修改营销服务这边的相关券信息。类似于下面这种语句：
+![在这里插入图片描述](https://img.jbzj.com/file_images/article/202011/20201127104223.jpg)
+    众所周知map插入顺序与遍历顺序是不一样的。根据后续的排查发现出现死锁的原因是多线程情况下该语句下两个map都有a与b对象，但是a，b这两个对象的hashcode是相同的
+hashcode相同的对象根据map的put原理，他俩是在同一个桶下，属于同一个链条。可能是因为二者插入顺序的不同导致了X-map是a对象排在b对象前头，Y-map是b对象排在
+a对象前头。导致二者在入库时互相持有当前锁又请求对方所持有的锁造成了死锁现象的出现。
 #### 解决方法
-
-#### 总结
+    1.改变入参形式，使用顺序集合列表。
+    2.每次update一次就提交一次事务释放锁。
