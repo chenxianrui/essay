@@ -125,7 +125,9 @@ Record lock, heap no 732 PHYSICAL RECORD: n_fields 3; compact format; info bits 
    代码层面出了问题。
    经过排查发现是因为在mybatis的xml文件中update语句中入参是map类型，该代码实现的内容是利用kafka监听商品服务的数据库信息的改变，进而
    修改营销服务这边的相关券信息。类似于下面这种语句：
-![在这里插入图片描述](https://img.jbzj.com/file_images/article/202011/20201127104223.jpg)
+   
+![在这里插入图片描述](https://img-blog.csdnimg.cn/fff52a2419364d52917f568f1895222c.png)
+
     众所周知map插入顺序与遍历顺序是不一样的。根据后续的排查发现出现死锁的原因是多线程情况下该语句下两个map都有a与b对象，但是a，b这两个对象的hashcode是相同的
 hashcode相同的对象根据map的put原理，他俩是在同一个桶下，属于同一个链条。可能是因为二者插入顺序的不同导致了X-map是a对象排在b对象前头，Y-map是b对象排在
 a对象前头。导致二者在入库时互相持有当前锁又请求对方所持有的锁造成了死锁现象的出现。
