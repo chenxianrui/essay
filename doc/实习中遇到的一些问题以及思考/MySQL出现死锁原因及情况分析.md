@@ -128,7 +128,7 @@ Record lock, heap no 732 PHYSICAL RECORD: n_fields 3; compact format; info bits 
    
 ![在这里插入图片描述](https://img-blog.csdnimg.cn/fff52a2419364d52917f568f1895222c.png)
 
-    众所周知map插入顺序与遍历顺序是不一样的。根据后续的排查发现出现死锁的原因是多线程情况下该语句下两个map都有a与b对象，但是a，b这两个对象的hashcode是相同的
+众所周知map插入顺序与遍历顺序是不一样的。根据后续的排查发现出现死锁的原因是多线程情况下该语句下两个map都有a与b对象，但是a，b这两个对象的hashcode是相同的
 hashcode相同的对象根据map的put原理，他俩是在同一个桶下，属于同一个链条。可能是因为二者插入顺序的不同导致了X-map是a对象排在b对象前头，Y-map是b对象排在
 a对象前头。导致二者在入库时互相持有当前锁又请求对方所持有的锁造成了死锁现象的出现。
 #### 解决方法
