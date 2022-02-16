@@ -108,6 +108,16 @@ Record lock, heap no 732 PHYSICAL RECORD: n_fields 3; compact format; info bits 
     b.事务128872002持有索引idx_coupon_id_is_delete的锁同时等待事务128871994持有的索引idx_coupon_id_is_delete锁 
     c.所以两个事务之间产生了循环等待，发生了死锁 
     d.两个事务持有的锁均为：lock_mode X locks rec but not gap 
+    e.lock_mode X locks rec but not gap 直译就是‘X锁模式锁住了记录但是只对该记录加锁’。因此是没有对范围产生影响的。
+    f.由上可知两个事务对记录加的是 X 锁和 not gap 锁，和间隙锁是没有关系的。
+    
+3.锁类型
+
+    a.X锁，写锁或排他锁。若事务T对该事务加上写锁，那其他事务就不能对该数据加上其他类型的锁，但是事务T可以对该数据进行读取或修改。
+    b.S锁，读锁。若事务T对该数据加上读锁，那其他事务只能对该数据加上读锁，而不能加其他类型的锁，直到已释放所有的读锁。
+    c.LOCK_ORDINARY(Next-Key Lock)，记录锁+GAP锁。锁定一个范围包括该记录本身。
+    d.LOCK_GAP，间隙锁。锁定一个范围，但不包括记录本身。
+    e.LOCK_REC_NOT_GAP，记录锁。锁定该记录本身。
     
     
 #### 问题排查
